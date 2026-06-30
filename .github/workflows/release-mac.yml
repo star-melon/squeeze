@@ -22,10 +22,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # GitHub-hosted Intel runners (macos-13) are deprecated/unreliable and
+          # leave the x64 job stuck "queued", so we build Apple Silicon only here.
+          # Intel Mac users can build locally with: npm run build:mac
           - os: macos-14   # Apple Silicon
             arch: arm64
-          - os: macos-13   # Intel
-            arch: x64
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
