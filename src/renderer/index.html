@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self'; object-src 'none'; base-uri 'self'" />
+  <title>Squeeze</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header id="app-header">
+      <svg id="app-logo" viewBox="0 0 1024 1024" width="34" height="34" aria-hidden="true">
+        <defs>
+          <linearGradient id="logo-bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#6D6AF6"/>
+            <stop offset="1" stop-color="#4338CA"/>
+          </linearGradient>
+        </defs>
+        <rect x="48" y="48" width="928" height="928" rx="224" fill="url(#logo-bg)"/>
+        <g fill="none" stroke="#fff" stroke-width="72" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="300,300 432,512 300,724"/>
+          <polyline points="724,300 592,512 724,724"/>
+        </g>
+        <rect x="486" y="356" width="52" height="312" rx="26" fill="#fff"/>
+      </svg>
+      <div class="app-titles">
+        <h1 id="app-title">Squeeze</h1>
+        <p id="app-subtitle">视频 / 图片压缩 · Video / Image Compressor</p>
+      </div>
+    </header>
+
+    <!-- Tab bar -->
+    <nav id="tab-bar" class="tab-bar" role="tablist" aria-label="压缩类型 · Compression type">
+      <button id="tab-video" class="tab is-active" type="button" role="tab"
+        aria-selected="true" data-panel="panel-video">视频 · Video</button>
+      <button id="tab-image" class="tab" type="button" role="tab"
+        aria-selected="false" data-panel="panel-image">图片 · Image</button>
+    </nav>
+
+    <!-- ============================== VIDEO PANEL ============================== -->
+    <section id="panel-video" class="panel is-active" role="tabpanel" aria-labelledby="tab-video">
+      <!-- Drop zone -->
+      <section id="v-drop-zone" class="drop-zone">
+        <div class="drop-zone-inner">
+          <svg class="drop-icon" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">
+            <path d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+              fill="none" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p class="drop-text">拖拽视频到这里 · Drag &amp; drop videos here</p>
+          <button id="v-btn-add-files" class="btn btn-secondary" type="button">添加文件 · Add files</button>
+        </div>
+      </section>
+
+      <!-- Controls -->
+      <section id="v-controls" class="controls">
+        <div class="control-row">
+          <!-- Target bitrate -->
+          <div class="control-group">
+            <label class="control-label" for="v-input-target-mbps">目标码率 · Target (MB/s)</label>
+            <div class="control-inline">
+              <input id="v-input-target-mbps" class="input-number" type="number"
+                min="0.05" max="100" step="0.05" value="0.5" />
+              <span id="v-kbps-label" class="kbps-label">≈ 0 kbps</span>
+            </div>
+          </div>
+
+          <!-- Preset segmented control -->
+          <div class="control-group">
+            <span class="control-label">质量 / 速度 · Quality</span>
+            <div id="v-preset-segmented" class="segmented" role="group" aria-label="Quality preset">
+              <button type="button" class="segment" data-preset="medium">快速 Fast</button>
+              <button type="button" class="segment is-active" data-preset="slow">均衡 Balanced</button>
+              <button type="button" class="segment" data-preset="veryslow">最佳 Best</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <!-- Remove audio -->
+          <div class="control-group">
+            <label class="checkbox-label" for="v-checkbox-remove-audio">
+              <input id="v-checkbox-remove-audio" type="checkbox" />
+              <span>移除音频 · Remove audio</span>
+            </label>
+          </div>
+
+          <!-- Concurrency -->
+          <div class="control-group">
+            <label class="control-label" for="v-select-concurrency">并行数 · Concurrency</label>
+            <select id="v-select-concurrency" class="input-select">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <!-- Output folder -->
+          <div class="control-group control-group-grow">
+            <span class="control-label">输出文件夹 · Output folder</span>
+            <div class="control-inline">
+              <span id="v-output-dir" class="output-dir" title="">默认：源文件夹/compressed</span>
+              <button id="v-btn-change-output" class="btn btn-secondary btn-small" type="button">更改 · Change</button>
+              <button id="v-btn-open-output" class="btn btn-secondary btn-small" type="button" disabled>打开 · Open</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Working list -->
+      <section id="v-file-list-section" class="file-list-section">
+        <ul id="v-file-list" class="file-list"></ul>
+        <p id="v-empty-hint" class="empty-hint">尚未添加文件 · No files added yet</p>
+      </section>
+
+      <!-- Completed list -->
+      <section id="v-completed-section" class="completed-section is-empty">
+        <div class="completed-header">
+          <span class="completed-title">已完成 · Completed</span>
+          <span id="v-completed-count" class="completed-count">0</span>
+        </div>
+        <ul id="v-completed-list" class="completed-list"></ul>
+      </section>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <div class="overall">
+          <div class="overall-text">
+            <span id="v-overall-count" class="overall-count">0 / 0</span>
+            <span id="v-overall-status" class="overall-status">就绪 · Ready</span>
+          </div>
+          <div class="progress overall-progress">
+            <div id="v-overall-bar" class="progress-bar" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="footer-actions">
+          <button id="v-btn-start" class="btn btn-primary" type="button" disabled>开始 · Start</button>
+          <button id="v-btn-cancel" class="btn btn-danger" type="button" hidden>取消 · Cancel</button>
+        </div>
+      </footer>
+    </section>
+
+    <!-- ============================== IMAGE PANEL ============================== -->
+    <section id="panel-image" class="panel" role="tabpanel" aria-labelledby="tab-image" hidden>
+      <!-- Drop zone -->
+      <section id="i-drop-zone" class="drop-zone">
+        <div class="drop-zone-inner">
+          <svg class="drop-icon" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true">
+            <path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5z"
+              fill="none" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+            <path d="M21 15l-5-5L5 21"
+              fill="none" stroke="currentColor" stroke-width="1.8"
+              stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p class="drop-text">拖拽图片到这里 · Drag &amp; drop images here</p>
+          <button id="i-btn-add-files" class="btn btn-secondary" type="button">添加图片 · Add images</button>
+        </div>
+      </section>
+
+      <!-- Controls -->
+      <section id="i-controls" class="controls">
+        <div class="control-row">
+          <!-- Mode segmented control -->
+          <div class="control-group">
+            <span class="control-label">模式 · Mode</span>
+            <div id="i-mode-segmented" class="segmented" role="group" aria-label="Compression mode">
+              <button type="button" class="segment is-active" data-mode="lossless">视觉无损 Lossless</button>
+              <button type="button" class="segment" data-mode="size">目标大小 Size</button>
+              <button type="button" class="segment" data-mode="quality">质量 Quality</button>
+            </div>
+          </div>
+
+          <!-- Size KB input (enabled only in mode=size) -->
+          <div id="i-size-group" class="control-group is-disabled">
+            <label class="control-label" for="i-input-size-kb">目标大小 · Target (KB)</label>
+            <div class="control-inline">
+              <input id="i-input-size-kb" class="input-number" type="number"
+                min="1" max="100000" step="1" value="100" disabled />
+              <span class="kbps-label">KB</span>
+            </div>
+          </div>
+
+          <!-- Quality input (enabled only in mode=quality) -->
+          <div id="i-quality-group" class="control-group is-disabled">
+            <label class="control-label" for="i-input-quality">质量 · Quality (1–100)</label>
+            <div class="control-inline">
+              <input id="i-input-quality" class="input-range" type="range"
+                min="1" max="100" step="1" value="80" disabled />
+              <span id="i-quality-value" class="kbps-label">80</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <!-- Concurrency -->
+          <div class="control-group">
+            <label class="control-label" for="i-select-concurrency">并行数 · Concurrency</label>
+            <select id="i-select-concurrency" class="input-select">
+              <option value="1">1</option>
+              <option value="2" selected>2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <!-- Output folder -->
+          <div class="control-group control-group-grow">
+            <span class="control-label">输出文件夹 · Output folder</span>
+            <div class="control-inline">
+              <span id="i-output-dir" class="output-dir" title="">默认：源文件夹/compressed</span>
+              <button id="i-btn-change-output" class="btn btn-secondary btn-small" type="button">更改 · Change</button>
+              <button id="i-btn-open-output" class="btn btn-secondary btn-small" type="button" disabled>打开 · Open</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Working list -->
+      <section id="i-file-list-section" class="file-list-section">
+        <ul id="i-file-list" class="file-list"></ul>
+        <p id="i-empty-hint" class="empty-hint">尚未添加图片 · No images added yet</p>
+      </section>
+
+      <!-- Completed list -->
+      <section id="i-completed-section" class="completed-section is-empty">
+        <div class="completed-header">
+          <span class="completed-title">已完成 · Completed</span>
+          <span id="i-completed-count" class="completed-count">0</span>
+        </div>
+        <ul id="i-completed-list" class="completed-list"></ul>
+      </section>
+
+      <!-- Footer -->
+      <footer class="app-footer">
+        <div class="overall">
+          <div class="overall-text">
+            <span id="i-overall-count" class="overall-count">0 / 0</span>
+            <span id="i-overall-status" class="overall-status">就绪 · Ready</span>
+          </div>
+          <div class="progress overall-progress">
+            <div id="i-overall-bar" class="progress-bar" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="footer-actions">
+          <button id="i-btn-start" class="btn btn-primary" type="button" disabled>开始 · Start</button>
+          <button id="i-btn-cancel" class="btn btn-danger" type="button" hidden>取消 · Cancel</button>
+        </div>
+      </footer>
+    </section>
+
+    <!-- Author signature -->
+    <div id="app-credit" class="app-credit">starmelon</div>
+  </div>
+
+  <script src="renderer.js"></script>
+</body>
+</html>

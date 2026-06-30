@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Build output (electron-builder artifacts)
+dist/
+out/
+
+# NOTE: build/ is intentionally tracked. It holds the app icons
+# (icon.svg / icon.png / icon.ico) and the macOS entitlements used
+# during packaging, which are required to build the app.
+
+# Logs
+*.log
+*_log*.txt
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment / secrets
+.env
+.env.*
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.tmp

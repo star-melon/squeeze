@@ -1,0 +1,11 @@
+# Normalize line endings: store LF in the repo for all text files.
+* text=auto eol=lf
+
+# Shell / macOS launcher scripts MUST be LF — CRLF breaks them on macOS.
+*.command text eol=lf
+*.sh      text eol=lf
+
+# Treat binary assets as binary (no EOL conversion, no diff noise).
+*.png  binary
+*.ico  binary
+*.icns binary
