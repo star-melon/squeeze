@@ -91,30 +91,33 @@ function resolveCwebp() {
   if (cwebpResolved) return;
   cwebpResolved = true;
 
-  let raw = null;
+  const exe = process.platform === 'win32' ? 'cwebp.exe' : 'cwebp';
+  const rel = path.join('node_modules', 'cwebp-bin', 'vendor', exe);
+  const candidates = [];
+
+  // 1. Direct path inside the packaged unpacked asar. Most reliable: it does NOT
+  //    call require(), which throws ERR_REQUIRE_ESM for cwebp-bin (ESM-only)
+  //    under Electron's bundled Node 20.
+  if (process.resourcesPath) {
+    candidates.push(path.join(process.resourcesPath, 'app.asar.unpacked', rel));
+  }
+  // 2. Relative to the app root (dev runs + the unpacked layout).
+  try { candidates.push(unpackedPath(path.join(app.getAppPath(), rel))); } catch (_) { /* ignore */ }
+  candidates.push(unpackedPath(path.join(__dirname, '..', rel)));
+
+  // 3. Whatever require('cwebp-bin') reports, when the runtime can load it.
   try {
-    const cwebpBin = require('cwebp-bin');
-    // cwebp-bin@7 is ESM: require() yields { default: '<path>' }. Older/other
-    // shapes give a string or { path }. Handle all three.
-    raw = typeof cwebpBin === 'string'
-      ? cwebpBin
-      : (cwebpBin && (cwebpBin.default || cwebpBin.path));
-  } catch (_) {
-    raw = null;
-  }
+    const m = require('cwebp-bin');
+    const p = typeof m === 'string' ? m : (m && (m.default || m.path));
+    if (p) { candidates.push(p, unpackedPath(p)); }
+  } catch (_) { /* ESM-only on this runtime; the direct paths above cover it */ }
 
-  const fixed = unpackedPath(raw);
-  if (fileExists(fixed)) {
-    cwebpPath = fixed;
-    return;
-  }
+  // 4. Local libwebp install fallback.
+  candidates.push(CWEBP_FALLBACK);
 
-  if (fileExists(CWEBP_FALLBACK)) {
-    cwebpPath = CWEBP_FALLBACK;
-    return;
+  for (const c of candidates) {
+    if (fileExists(c)) { cwebpPath = c; return; }
   }
-
-  // Neither available — leave null; per-item errors will explain.
   cwebpPath = null;
 }
 

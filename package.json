@@ -1,7 +1,7 @@
 {
   "name": "squeeze",
-  "version": "0.1.0",
-  "description": "A minimal, clean cross-platform desktop app that compresses videos with bundled ffmpeg (H.264 two-pass ABR).",
+  "version": "0.1.1",
+  "description": "A minimal, clean cross-platform desktop app that compresses videos (H.264 two-pass) and images (cwebp/WebP) with bundled ffmpeg and cwebp.",
   "main": "src/main.js",
   "author": "Squeeze",
   "license": "MIT",
